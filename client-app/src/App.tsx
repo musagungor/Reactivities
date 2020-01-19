@@ -24,8 +24,7 @@ class App extends Component {
           <Header.Content>Reactivities</Header.Content>
         </Header>
         <List>
-          {this.state.values.map((value: any) => (
-            // <li key={value.id}>{value.name}</li>
+          {this.state.values.map((value: any) => (             
             <List.Item key={value.id}>{value.name}</List.Item>
           ))}
         </List>
