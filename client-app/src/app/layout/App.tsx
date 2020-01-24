@@ -40,6 +40,7 @@ const App = () => {
           selectedActivity={selectedActivity}
           editMode = {editMode}
           setEditMode = {setEditMode}
+          setSelectedActivity = {setSelectedActivity}
         />
       </Container>
     </Fragment>
