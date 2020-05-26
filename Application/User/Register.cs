@@ -81,7 +81,7 @@ namespace Application.User
                     return new User
                     {
                         DisplayName = user.DisplayName,
-                        Image = null,
+                        Image =  user.Photos.FirstOrDefault(x => x.IsMain)?.Url,
                         Token = _jwtGenerator.CreateToken(user),
                         Username = user.UserName
                     };
