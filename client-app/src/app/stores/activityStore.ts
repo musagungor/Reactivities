@@ -1,12 +1,12 @@
 import { setActivityProps, createAttendee } from './../common/util/util';
 import { RootStore } from './rootStore';
 import { IActivity } from './../models/activity';
-import { observable, action, computed, runInAction, reaction } from 'mobx';
+import { observable, action, computed, runInAction, reaction, toJS } from 'mobx';
 import { SyntheticEvent } from 'react';
 import agent from '../api/agent';
 import { history } from '../..';
 import { toast } from 'react-toastify';
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr';
 
 const LIMIT = 2;
 
@@ -71,7 +71,7 @@ export default class ActivityStore {
 
     @action createHubConnection = (activityId: string) => {
         this.hubConnection = new HubConnectionBuilder()
-            .withUrl('http://localhost:5000/chat', {
+            .withUrl(process.env.REACT_APP_CHAT_URL!, {
                 accessTokenFactory: () => this.rootStore.commonStore.token!
             })
             .configureLogging(LogLevel.Information)
@@ -81,8 +81,9 @@ export default class ActivityStore {
             .start()
             .then(() => console.log(this.hubConnection!.state))
             .then(() => {
-                console.log('Attempting to join group');
-                this.hubConnection!.invoke('AddToGroup', activityId);
+                if (this.hubConnection!.state === HubConnectionState.Connected) {
+                    this.hubConnection!.invoke('AddToGroup', activityId);
+                }
             })
             .catch(error => console.log('error establishing connection: ', error));
 
@@ -99,13 +100,14 @@ export default class ActivityStore {
     }
 
     @action stophubConnection = () => {
-        this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
+        if (this.hubConnection!.state === HubConnectionState.Connected) {
+            this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
             .then(() => {
                 this.hubConnection!.stop();
             })
             .then(() => console.log("connection has stopped"))
-            .catch((error) => console.log(error))
-
+            .catch((error) => console.log(error));
+        }
 
     }
 
@@ -162,7 +164,7 @@ export default class ActivityStore {
 
         if (activity) {
             this.activity = activity;
-            return activity;
+            return toJS(activity);
         } else {
             this.loadingInitial = true;
             try {
